@@ -1,9 +1,10 @@
 import cv2
-import pyautogui
 from time import time
 from math import hypot
 import mediapipe as mp
 import matplotlib.pyplot as plt
+from pythonosc import udp_client
+from pythonosc import osc_message_builder
 
 mp_pose = mp.solutions.pose
 
@@ -40,14 +41,14 @@ def detectPose(image, pose, draw=False, display=False):
 
         # Display the original input image and the resultant image.
         plt.figure(figsize=[22, 22])
-        plt.subplot(121);
-        plt.imshow(image[:, :, ::-1]);
-        plt.title("Original Image");
-        plt.axis('off');
-        plt.subplot(122);
-        plt.imshow(output_image[:, :, ::-1]);
-        plt.title("Output Image");
-        plt.axis('off');
+        plt.subplot(121)
+        plt.imshow(image[:, :, ::-1])
+        plt.title("Original Image")
+        plt.axis('off')
+        plt.subplot(122)
+        plt.imshow(output_image[:, :, ::-1])
+        plt.title("Output Image")
+        plt.axis('off')
 
     # Otherwise
     else:
@@ -246,6 +247,36 @@ def checkJumpCrouch(image, results, MID_Y=250, draw=False, display=False):
         return output_image, posture
 
 
+def sendOSC(pose_str):
+    oscSender = udp_client.UDPClient("192.168.72.31", 8000)
+
+    if pose_str== 'up':
+        msg = osc_message_builder.OscMessageBuilder('/KEY/DOWN/38')
+        oscSender.send(msg.build())
+        msg = osc_message_builder.OscMessageBuilder('/KEY/UP/38')
+        oscSender.send(msg.build())
+    elif pose_str == 'down':
+        msg = osc_message_builder.OscMessageBuilder('/KEY/DOWN/40')
+        oscSender.send(msg.build())
+        msg = osc_message_builder.OscMessageBuilder('/KEY/UP/40')
+        oscSender.send(msg.build())
+    elif pose_str == 'left':
+        msg = osc_message_builder.OscMessageBuilder('/KEY/DOWN/37')
+        oscSender.send(msg.build())
+        msg = osc_message_builder.OscMessageBuilder('/KEY/UP/37')
+        oscSender.send(msg.build())
+    elif pose_str == 'right':
+        msg = osc_message_builder.OscMessageBuilder('/KEY/DOWN/39')
+        oscSender.send(msg.build())
+        msg = osc_message_builder.OscMessageBuilder('/KEY/UP/39')
+        oscSender.send(msg.build())
+    elif pose_str == 'space':
+        msg = osc_message_builder.OscMessageBuilder('/KEY/DOWN/32')
+        oscSender.send(msg.build())
+        msg = osc_message_builder.OscMessageBuilder('/KEY/UP/32')
+        oscSender.send(msg.build())
+
+
 # Initialize the VideoCapture object to read from the webcam.
 camera_video = cv2.VideoCapture(0)
 camera_video.set(3, 1280)
@@ -313,7 +344,7 @@ while camera_video.isOpened():
                     horizontal_position == 'Center' and x_pos_index == 2):
 
                 # Press the left arrow key.
-                pyautogui.press('left')
+                sendOSC('left')
 
                 # Update the horizontal position index of the character.
                 x_pos_index -= 1
@@ -323,7 +354,7 @@ while camera_video.isOpened():
                     horizontal_position == 'Center' and x_pos_index == 0):
 
                 # Press the right arrow key.
-                pyautogui.press('right')
+                sendOSC('right')
 
                 # Update the horizontal position index of the character.
                 x_pos_index += 1
@@ -368,7 +399,7 @@ while camera_video.isOpened():
                     MID_Y = abs(right_y + left_y) // 2
 
                     # Move to 1300, 800, then click the left mouse button to start the game.
-                    pyautogui.click(x=1300, y=800, button='left')
+                    sendOSC('left')
 
                 # ----------------------------------------------------------------------------------------------------------
 
@@ -379,7 +410,7 @@ while camera_video.isOpened():
                 else:
 
                     # Press the space key.
-                    pyautogui.press('space')
+                    sendOSC('space')
 
                 # ----------------------------------------------------------------------------------------------------------
 
@@ -407,7 +438,7 @@ while camera_video.isOpened():
             if posture == 'Jumping' and y_pos_index == 1:
 
                 # Press the up arrow key
-                pyautogui.press('up')
+                sendOSC('up')
 
                 # Update the veritcal position index of  the character.
                 y_pos_index += 1
@@ -416,7 +447,7 @@ while camera_video.isOpened():
             elif posture == 'Crouching' and y_pos_index == 1:
 
                 # Press the down arrow key
-                pyautogui.press('down')
+                sendOSC('down')
 
                 # Update the veritcal position index of the character.
                 y_pos_index -= 1
